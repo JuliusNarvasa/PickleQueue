@@ -8,7 +8,7 @@ import { loadSession, saveSession } from './storage';
 type Route = 'choose' | 'setup' | 'roster' | 'play' | 'complete';
 type Toast = { msg: string; undo?: () => void } | null;
 
-const SKILL_LABEL = ['—', 'Beginner', 'Developing', 'Intermediate', 'Advanced', 'Expert', 'Elite'];
+const SKILL_LABEL = ['—', 'Beginner', 'Adv. Beginner', 'Intermediate', 'Adv. Intermediate', 'Advanced', 'Expert'];
 
 function emptySession(): Session {
   return {
@@ -234,7 +234,7 @@ function SetupScreen({ session, update, go, showHidden, setShowHidden }: {
           {visibleModes.map((m) => (
             <button key={m.id} className={session.matchingMode === m.id ? 'modecard sel' : 'modecard'}
               onClick={() => update((s) => ({ ...s, matchingMode: m.id as MatchingMode }))}>
-              <b>{m.label}</b><span>{m.desc}</span>
+              <b>{session.matchingMode === m.id ? '✓ ' : ''}{m.label}{m.tag ? <> <span className={`tag ${m.tagCls ?? ''}`}>{m.tag}</span></> : null}</b><span>{m.desc}</span>
             </button>
           ))}
         </div>
@@ -350,10 +350,12 @@ function RosterScreen({ session, update, go, flash, onStart }: {
       ))}
 
       <div className="stickybar">
-        <button onClick={() => go('setup')}>← Back</button>
-        <button className="primary big" disabled={!ready} onClick={onStart} title={ready ? '' : `Need ${need} checked in`}>
-          START PLAY {ready ? `(${checkedIn} ready)` : `(${checkedIn}/${need} ready)`}
-        </button>
+        <div className="inner">
+          <button onClick={() => go('setup')}>← Back</button>
+          <button className="primary big" disabled={!ready} onClick={onStart} title={ready ? '' : `Need ${need} checked in`}>
+            START PLAY {ready ? `(${checkedIn} ready)` : `(${checkedIn}/${need} ready)`}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -596,8 +598,10 @@ function PlayScreen({ session, setSession, flash, go }: {
       </section>
 
       <div className="stickybar">
-        <button onClick={() => go('roster')}>Players</button>
-        <span className="muted">games spread: {spread(session.players)}</span>
+        <div className="inner">
+          <button onClick={() => go('roster')}>Players</button>
+          <span className="muted">games spread: {spread(session.players)}</span>
+        </div>
       </div>
 
       {chooseCourt != null && (

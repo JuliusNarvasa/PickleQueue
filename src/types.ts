@@ -62,11 +62,11 @@ export interface Session {
   matchDurationsSec: number[];
 }
 
-export const MODES: { id: MatchingMode; label: string; desc: string; hidden?: boolean }[] = [
-  { id: 'balanced', label: 'Balanced', desc: 'RECOMMENDED — rating-aware, avoids repeats' },
-  { id: 'social', label: 'Social Mix', desc: 'Rotate partners, ratings unused' },
-  { id: 'skill-separated', label: 'Skill Separated', desc: 'Similar skill levels share a court' },
-  { id: 'winners-losers', label: 'Winners / Losers', desc: 'Winners play winners, losers play losers' },
+export const MODES: { id: MatchingMode; label: string; desc: string; tag?: string; tagCls?: string; hidden?: boolean }[] = [
+  { id: 'balanced', label: 'Balanced', desc: 'Balances teams by rating. Avoids repeat matchups when possible.', tag: 'RECOMMENDED', tagCls: 'rec' },
+  { id: 'social', label: 'Social Mix', desc: 'Rotates partners before repeating, then spreads opponents as fairly as possible. Ratings aren’t used.', tag: 'IMPROVED', tagCls: 'imp' },
+  { id: 'skill-separated', label: 'Skill Separated', desc: 'Keeps similar skill levels together. May leave a court waiting.' },
+  { id: 'winners-losers', label: 'Winners / Losers', desc: 'Winners play winners and losers play losers. PickleQ rotates between both groups.' },
   { id: 'skill-courts', label: 'Skill Courts', desc: 'Per-group courts + queue', hidden: true },
   { id: 'mixed-doubles', label: 'Mixed Doubles', desc: '1M + 1F per team', hidden: true },
   { id: 'king-queen', label: 'King / Queen of the Court', desc: 'Winners move up, losers move down', hidden: true },
