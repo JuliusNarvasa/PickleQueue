@@ -44,6 +44,32 @@ function useNow(stepMs = 1000) {
   return now;
 }
 
+function Logo() {
+  return (
+    <svg className="logoimg" viewBox="0 0 64 64" width="32" height="32" aria-hidden="true">
+      <defs>
+        <linearGradient id="pq-g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#22c55e" />
+          <stop offset="1" stopColor="#15803d" />
+        </linearGradient>
+      </defs>
+      <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#pq-g)" />
+      <rect x="2" y="2" width="60" height="60" rx="16" fill="none" stroke="#166534" strokeWidth="2" />
+      <circle cx="32" cy="27" r="15" fill="#fff" />
+      <g fill="#15803d">
+        <circle cx="26" cy="22" r="2.6" />
+        <circle cx="34" cy="20" r="2.6" />
+        <circle cx="39" cy="26" r="2.6" />
+        <circle cx="29" cy="29" r="2.6" />
+        <circle cx="36" cy="33" r="2.6" />
+        <circle cx="26" cy="35" r="2.6" />
+      </g>
+      <rect x="19" y="46" width="26" height="3.6" rx="1.8" fill="#bbf7d0" />
+      <rect x="24" y="52" width="16" height="3.2" rx="1.6" fill="#bbf7d0" opacity="0.7" />
+    </svg>
+  );
+}
+
 export default function App() {
   const [route, setRoute] = useState<Route>('choose');
   const [session, setSession] = useState<Session>(() => loadSession() ?? emptySession());
@@ -80,15 +106,22 @@ export default function App() {
 
   return (
     <div className="app">
-      <header className="topbar">
-        <span className="logo">PickleQueue</span>
+      <header className={route === 'play' ? 'topbar play' : 'topbar'}>
+        <div className="brand">
+          <Logo />
+          <span className="wordmark">PickleQueue</span>
+        </div>
         {route === 'play' && (
-          <span className="hud">
-            {MODES.find((m) => m.id === session.matchingMode)?.label} · 🏆{' '}
-            <button className="linkbtn" data-testid="end-session" onClick={() => setConfirmEnd(true)}>End</button> ·{' '}
-            {session.name} · COURTS {session.courtStates.filter((c) => c.status === 'live').length}/{session.courtStates.length} ·{' '}
-            PLAYERS {session.players.filter((p) => p.checkedIn).length} · QUEUE {queueCount(session)}
-          </span>
+          <button className="endbtn" data-testid="end-session" onClick={() => setConfirmEnd(true)}>End</button>
+        )}
+        {route === 'play' && (
+          <div className="playstats">
+            <span className="pchip">{MODES.find((m) => m.id === session.matchingMode)?.label}</span>
+            <span className="pchip">{session.name}</span>
+            <span className="pchip">Courts {session.courtStates.filter((c) => c.status === 'live').length}/{session.courtStates.length}</span>
+            <span className="pchip">Players {session.players.filter((p) => p.checkedIn).length}</span>
+            <span className="pchip">Queue {queueCount(session)}</span>
+          </div>
         )}
       </header>
 
@@ -381,12 +414,12 @@ function PlayerRow({ p, players, pairArm, onSkill, onCheck, onRemove, onPair, on
         <>
           <button className={pairArm === p.id ? 'sel' : ''} onClick={onPair} title="Pair lock">Pair</button>
           {mate && <button onClick={onUnpair} title="Remove pair lock">Unpair</button>}
-          <button onClick={onCheck} title="Check out">✕</button>
+          <button className="iconbtn" onClick={onCheck} title="Check out" aria-label={`Check out ${p.name}`}>✕</button>
         </>
       ) : (
         <>
           <button onClick={onCheck}>Check in</button>
-          <button onClick={onRemove} title="Remove">✕</button>
+          <button className="iconbtn" onClick={onRemove} title="Remove" aria-label={`Remove ${p.name}`}>✕</button>
         </>
       )}
     </div>
@@ -549,9 +582,9 @@ function PlayScreen({ session, setSession, flash, go }: {
           <div key={m.id} className="upnext">
             <span>{m.teamA.map(nameOf).join(' & ')} vs {m.teamB.map(nameOf).join(' & ')}</span>
             <span className="muted">{m.auto ? 'Auto' : 'Manual'}</span>
-            <button onClick={() => setSession((prev) => ({ ...prev, upNext: prev.upNext.filter((x) => x.id !== m.id) }))}>✕</button>
+            <button className="iconbtn" aria-label="Remove staged match" onClick={() => setSession((prev) => ({ ...prev, upNext: prev.upNext.filter((x) => x.id !== m.id) }))}>✕</button>
             {session.courtStates.filter((c) => c.status === 'ready').map((c) => (
-              <button key={c.id} className="primary" onClick={() => sendToCourt(m.id, c.id)}>Send to Court {c.id}</button>
+              <button key={c.id} onClick={() => sendToCourt(m.id, c.id)}>Send to Court {c.id}</button>
             ))}
           </div>
         ))}
@@ -567,7 +600,7 @@ function PlayScreen({ session, setSession, flash, go }: {
               <span>{p.gamesPlayed}</span>
               <span>{p.gamesPlayed ? Math.round((p.wins / p.gamesPlayed) * 100) + '%' : '—'}</span>
               <span>⏳ {fmtClock(Math.max(0, (i) * avgMatchSec))}</span>
-              <span><button onClick={() => setSession((prev) => ({ ...prev, players: prev.players.map((q) => q.id === p.id ? { ...q, checkedIn: false } : q) }))}>✕</button></span>
+              <span><button className="iconbtn" aria-label={`Check out ${p.name}`} onClick={() => setSession((prev) => ({ ...prev, players: prev.players.map((q) => q.id === p.id ? { ...q, checkedIn: false } : q) }))}>✕</button></span>
             </div>
           ))}
         </div>
@@ -701,10 +734,11 @@ function CompleteScreen({ session, setSession, go }: {
           <span>{l.losers.map(nameOf).join(' & ')}</span><span></span><span></span></div>
       ))}
 
-      <div className="row">
+      <div className="row endrow">
         <button onClick={share}>Share</button>
+        <span className="spacer" />
         <button className="primary" onClick={() => fresh(false)}>Start new session</button>
-        <button className="primary" onClick={() => fresh(true)}>Start with same players</button>
+        <button onClick={() => fresh(true)}>Same players</button>
       </div>
     </div>
   );
