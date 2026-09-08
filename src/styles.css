@@ -92,6 +92,7 @@ section > h2:first-child, section > .row:first-child { margin-top: 0; }
 }
 .choose .hero h1 { font-size: 60px; line-height: 1; letter-spacing: -0.03em; margin: 0 0 12px; }
 .choose .cards { display: grid; gap: 12px; margin: 16px 0; }
+.choose a { color: var(--color-off-black-ink); text-decoration: none; border-bottom: 1px solid var(--color-off-black-ink); }
 .bigcard {
   display: flex; flex-direction: column; gap: 4px; padding: 24px;
   font-size: 16px; text-align: left;
