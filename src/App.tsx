@@ -144,8 +144,11 @@ function queueCount(s: Session) {
 function ChooseScreen({ go }: { go: (r: Route) => void }) {
   return (
     <div className="choose">
-      <h1>Set up open play in 60 seconds</h1>
-      <p className="muted">No signup required · Works offline</p>
+      <div className="hero">
+        <div className="eyebrow">Open play · No signup</div>
+        <h1>Set up open play in 60 seconds</h1>
+        <p>Works offline · Free · Courts 1–64</p>
+      </div>
       <div className="cards">
         <button className="bigcard" onClick={() => go('setup')}>
           <b>I organize open play</b>
@@ -655,8 +658,11 @@ function CompleteScreen({ session, setSession, go }: {
 
   return (
     <div className="complete">
-      <h1>Session Complete 🎉</h1>
-      <p>{games} games · {minutes} minutes · {session.courtStates.length} courts</p>
+      <div className="band">
+        <div className="eyebrow">Session over</div>
+        <h1>Session Complete</h1>
+        <p>{games} games · {minutes} minutes · {session.courtStates.length} courts</p>
+      </div>
       <p className="muted">Session pace: avg match {fmtClock(avgMatch)} (based on {session.matchDurationsSec.length} timed matches)</p>
 
       <h2>FINAL STANDINGS</h2>
