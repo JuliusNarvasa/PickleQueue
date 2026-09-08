@@ -85,7 +85,7 @@ export default function App() {
         {route === 'play' && (
           <span className="hud">
             {MODES.find((m) => m.id === session.matchingMode)?.label} · 🏆{' '}
-            <button className="linkbtn" onClick={() => setConfirmEnd(true)}>End</button> ·{' '}
+            <button className="linkbtn" data-testid="end-session" onClick={() => setConfirmEnd(true)}>End</button> ·{' '}
             {session.name} · COURTS {session.courtStates.filter((c) => c.status === 'live').length}/{session.courtStates.length} ·{' '}
             PLAYERS {session.players.filter((p) => p.checkedIn).length} · QUEUE {queueCount(session)}
           </span>
