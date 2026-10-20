@@ -4,8 +4,9 @@ import {
 } from './types';
 import { applyResult, buildUpNext, fairPool, rankStandings, spread } from './scheduler';
 import { loadSession, saveSession } from './storage';
+import { trackPlay } from './tracking';
 
-type Route = 'landing' | 'setup' | 'roster' | 'live' | 'complete';
+type Route = 'landing' | 'setup' | 'roster' | 'live' | 'complete' | 'tracking' | 'notfound';
 type Toast = { msg: string; undo?: () => void } | null;
 
 function emptySession(): Session {
@@ -155,6 +156,10 @@ export default function App() {
     if (s && s.startedAt && !s.endedAt && s.courtStates.length > 0) setRoute('live');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  // Tracking page route (token-gated). /tracking or /tracking/<token>
+  useEffect(() => {
+    if (window.location.pathname.toLowerCase().startsWith('/tracking')) setRoute('tracking');
+  }, []);
 
   const flash = (msg: string, undo?: () => void) => {
     setToast({ msg, undo });
@@ -202,6 +207,8 @@ export default function App() {
       {route === 'live' && (
         <LiveScreen session={session} setSession={setSession} flash={flash} go={setRoute} />
       )}
+      {route === 'tracking' && <TrackingScreen />}
+      {route === 'notfound' && <NotFoundScreen />}
       {route === 'complete' && (
         <CompleteScreen session={session} setSession={setSession} go={setRoute} />
       )}
@@ -672,6 +679,11 @@ function LiveScreen({ session, setSession, flash, go }: {
       };
       return restage(next);
     });
+    // Silent tracking: who played on this court. Fire-and-forget; never disrupts queuing.
+    try {
+      const playedNames = [...court.teamA, ...court.teamB].map(nameOf);
+      trackPlay(playedNames);
+    } catch { /* swallow */ }
     flash(`Match logged · ${wnames} won`, () => {
       setSession((prev) => restage({
         ...prev,
@@ -1204,6 +1216,75 @@ function CompleteScreen({ session, setSession, go }: {
         <button className="btn btn-secondary" onClick={() => fresh(true)}>Same players</button>
         <button className="btn btn-primary btn-big" onClick={() => fresh(false)}>Start new session</button>
       </nav>
+    </main>
+  );
+}
+/* ---------------- Tracking page (token-gated) ---------------- */
+interface PlayRecord { id: number; ts: number; names: string[] }
+
+function tokenFromUrl(): string | null {
+  const segs = window.location.pathname.split('/').filter(Boolean);
+  if (segs.length >= 2 && segs[0].toLowerCase() === 'tracking') return decodeURIComponent(segs[1]);
+  const q = new URLSearchParams(window.location.search).get('token');
+  return q;
+}
+
+function TrackingScreen() {
+  const token = tokenFromUrl();
+  const [state, setState] = useState<'loading' | 'ok' | 'notfound' | 'error'>('loading');
+  const [plays, setPlays] = useState<PlayRecord[]>([]);
+
+  useEffect(() => {
+    if (!token) { setState('notfound'); return; }
+    const url = `/api/plays?token=${encodeURIComponent(token)}`;
+    fetch(url, { headers: { 'X-Tracking-Token': token } })
+      .then(async (res) => {
+        if (res.status === 404 || res.status === 401 || res.status === 403) { setState('notfound'); return; }
+        if (!res.ok) { setState('error'); return; }
+        const data = await res.json();
+        setPlays(Array.isArray(data) ? data : (data.plays ?? []));
+        setState('ok');
+      })
+      .catch(() => setState('error'));
+  }, [token]);
+
+  if (state === 'loading') {
+    return <main className="app"><section className="card"><p className="muted">Loading…</p></section></main>;
+  }
+  if (state === 'notfound') {
+    return <NotFoundScreen />;
+  }
+  if (state === 'error') {
+    return <main className="app"><section className="card"><p className="muted">Tracker offline.</p></section></main>;
+  }
+  return (
+    <main className="app">
+      <section className="card">
+        <h2>Played on court</h2>
+        {plays.length === 0 ? (
+          <p className="muted">No plays recorded yet.</p>
+        ) : (
+          <ul className="log-list">
+            {plays.map((p) => (
+              <li key={p.id} className="log-row-app">
+                <span className="ltime">{new Date(p.ts).toLocaleString()}</span>
+                <span>{(p.names || []).join(' + ')}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </main>
+  );
+}
+
+function NotFoundScreen() {
+  return (
+    <main className="app">
+      <section className="card" style={{ textAlign: 'center' }}>
+        <h1 style={{ fontSize: 48, margin: 0 }}>404</h1>
+        <p className="muted">Not found.</p>
+      </section>
     </main>
   );
 }

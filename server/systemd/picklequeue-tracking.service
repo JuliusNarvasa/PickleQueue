@@ -1,0 +1,29 @@
+[Unit]
+Description=PickleQueue tracking service
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/PickleQueue/server
+Environment=PORT=4323
+Environment=NODE_ENV=production
+Environment=TRACKING_TOKEN=CHANGE_ME
+ExecStartPre=/usr/bin/mkdir -p /home/ubuntu/PickleQueue/server/data
+ExecStart=/usr/bin/node index.js
+Restart=on-failure
+RestartSec=5
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+ReadWritePaths=/home/ubuntu/PickleQueue/server/data
+LimitNOFILE=8192
+MemoryMax=256M
+
+StandardOutput=append:/var/log/picklequeue-tracking.log
+StandardError=append:/var/log/picklequeue-tracking.log
+
+[Install]
+WantedBy=multi-user.target
