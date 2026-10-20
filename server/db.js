@@ -1,22 +1,24 @@
 // db.js - SQLite schema and helpers for the PickleQueue tracking service.
-// Uses Node's built-in node:sqlite (no native deps). Tracks who played on a court.
+// Uses better-sqlite3 (synchronous, WAL mode). Tracks who played on a court.
 
-import { DatabaseSync } from 'node:sqlite';
+import Database from 'better-sqlite3';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 
 export function openDb(dbPath) {
   mkdirSync(dirname(dbPath), { recursive: true });
-  const db = new DatabaseSync(dbPath);
-  db.exec('PRAGMA journal_mode = WAL');
+  const db = new Database(dbPath);
+  db.pragma('journal_mode = WAL');
+
   db.exec(`
     CREATE TABLE IF NOT EXISTS plays (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       ts INTEGER NOT NULL,
       names TEXT NOT NULL
     );
+    CREATE INDEX IF NOT EXISTS idx_plays_ts ON plays(ts);
   `);
-  db.exec('CREATE INDEX IF NOT EXISTS idx_plays_ts ON plays(ts);');
+
   return db;
 }
 
